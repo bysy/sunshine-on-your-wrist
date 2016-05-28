@@ -1,0 +1,9 @@
+<!--
+  ~ Copyright (c) 2016. Benjamin Schulz (github.com/bysy)
+  -->
+
+<resources>
+    <string name="app_name">Sunshine Watchface</string>
+    <string name="message">Watch face tapped</string>
+    <string name="watchface_name">Sunshine</string>
+</resources>
