@@ -36,6 +36,7 @@ import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.Utility;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.muzei.WeatherMuzeiSource;
+import com.github.bysy.sunshine.watchface.common.WeatherData;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,6 +52,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
+
+import me.denley.courier.Courier;
 
 public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String LOG_TAG = SunshineSyncAdapter.class.getSimpleName();
@@ -345,6 +348,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                         new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
 
                 MyData todaysData = getLatestData(getContext());
+                updateWearable(todaysData);
                 updateWidgets();
                 updateMuzei();
                 notifyWeather(todaysData);
@@ -375,6 +379,15 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             context.startService(new Intent(ACTION_DATA_UPDATED)
                     .setClass(context, WeatherMuzeiSource.class));
         }
+    }
+
+    private void updateWearable(MyData data) {
+        WeatherData payload = new WeatherData();
+        payload.high = (int) Math.round(data.high);
+        payload.low = (int) Math.floor(data.low);
+        payload.iconIx = data.iconId;
+        Log.d(LOG_TAG, "updating wearable: " + payload.toString());
+        Courier.deliverData(getContext(), "/weather", payload);
     }
 
     private void notifyWeather(MyData data) {

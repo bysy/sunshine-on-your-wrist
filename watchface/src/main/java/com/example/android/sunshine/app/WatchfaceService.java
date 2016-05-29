@@ -2,7 +2,7 @@
  * Copyright (c) 2016. Benjamin Schulz (github.com/bysy)
  */
 
-package com.example.sunshine.github.bysy.sunshinewatchface;
+package com.example.android.sunshine.app;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,16 +19,21 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.github.bysy.sunshine.watchface.common.WeatherData;
 
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+
+import me.denley.courier.BackgroundThread;
+import me.denley.courier.Courier;
+import me.denley.courier.ReceiveData;
 
 /**
  * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
@@ -48,6 +53,17 @@ public class WatchfaceService extends CanvasWatchFaceService {
      * Handler message id for updating the time periodically in interactive mode.
      */
     private static final int MSG_UPDATE_TIME = 0;
+    private static final String LOG_TAG = WatchfaceService.class.getSimpleName();
+
+    private WeatherData mData;
+
+    @BackgroundThread
+    @ReceiveData("/weather")
+    public void handleWeatherData(WeatherData data) {
+        mData = data;
+        Log.d(LOG_TAG, "received data: " + data.toString() +
+           data.high + data.low);
+    }
 
     @Override
     public Engine onCreateEngine() {
@@ -100,6 +116,7 @@ public class WatchfaceService extends CanvasWatchFaceService {
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
+            Courier.startReceiving(WatchfaceService.this);
 
             setWatchFaceStyle(new WatchFaceStyle.Builder(WatchfaceService.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
@@ -122,6 +139,7 @@ public class WatchfaceService extends CanvasWatchFaceService {
         @Override
         public void onDestroy() {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            Courier.stopReceiving(WatchfaceService.this);
             super.onDestroy();
         }
 
@@ -244,6 +262,8 @@ public class WatchfaceService extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
+            drawWeather(canvas, bounds);
+
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
@@ -254,6 +274,22 @@ public class WatchfaceService extends CanvasWatchFaceService {
                     : String.format("%d:%02d:%02d", mCalendar.get(Calendar.HOUR),
                     mCalendar.get(Calendar.MINUTE), mCalendar.get(Calendar.SECOND));
             canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+        }
+
+        private void drawWeather(Canvas canvas, Rect bounds) {
+            if (mData==null) {
+                canvas.drawText("n/a", bounds.centerX(), bounds.centerY(), mTextPaint);
+                return;
+            }
+            canvas.drawText(String.format("%s %s", mData.high, mData.low), pctX(0.2f, bounds), pctY(0.67f, bounds), mTextPaint);
+        }
+
+        private float pctY(float s, Rect bounds) {
+            return s * bounds.height() + bounds.top;
+        }
+
+        private float pctX(float s, Rect bounds) {
+            return s * bounds.width() + bounds.left;
         }
 
         /**
