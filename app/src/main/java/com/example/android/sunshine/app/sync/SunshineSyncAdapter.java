@@ -382,12 +382,14 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void updateWearable(MyData data) {
+        Context context = getContext();
         WeatherData payload = new WeatherData();
         payload.high = (int) Math.round(data.high);
         payload.low = (int) Math.floor(data.low);
-        payload.iconIx = data.iconId;
+        // Drawable to bitmap: http://stackoverflow.com/a/3035869
+        payload.icon = BitmapFactory.decodeResource(context.getResources(), data.iconId);
         Log.d(LOG_TAG, "updating wearable: " + payload.toString());
-        Courier.deliverData(getContext(), "/weather", payload);
+        Courier.deliverData(context, "/weather", payload);
     }
 
     private void notifyWeather(MyData data) {

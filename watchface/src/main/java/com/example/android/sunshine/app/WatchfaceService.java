@@ -61,8 +61,7 @@ public class WatchfaceService extends CanvasWatchFaceService {
     @ReceiveData("/weather")
     public void handleWeatherData(WeatherData data) {
         mData = data;
-        Log.d(LOG_TAG, "received data: " + data.toString() +
-           data.high + data.low);
+        Log.d(LOG_TAG, "received data: " + data.toString());
     }
 
     @Override
@@ -282,6 +281,11 @@ public class WatchfaceService extends CanvasWatchFaceService {
                 return;
             }
             canvas.drawText(String.format("%s %s", mData.high, mData.low), pctX(0.2f, bounds), pctY(0.67f, bounds), mTextPaint);
+            // Draw the weather icon only in interactive mode.
+            // In a full production app we'd provide AMOLED-safe (thin outline) weather icons.
+            if (mData.icon!=null && !isInAmbientMode()) {
+                canvas.drawBitmap(mData.icon, pctX(0.42f, bounds), pctY(0.75f, bounds), null);
+            }
         }
 
         private float pctY(float s, Rect bounds) {

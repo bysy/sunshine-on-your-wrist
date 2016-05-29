@@ -4,6 +4,8 @@
 
 package com.github.bysy.sunshine.watchface.common;
 
+import android.graphics.Bitmap;
+
 import me.denley.courier.Deliverable;
 
 /**
@@ -14,8 +16,8 @@ import me.denley.courier.Deliverable;
 public class WeatherData {
     public int high;
     public int low;
-    public int iconIx;
+    public Bitmap icon;
     public String toString() {
-        return String.format("WeatherData(%d, %d, %d", high, low, iconIx);
+        return String.format("WeatherData(%d, %d, %s", high, low, icon.toString());
     }
 }
