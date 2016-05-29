@@ -93,7 +93,8 @@ public class WatchfaceService extends CanvasWatchFaceService {
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
-        Paint mTextPaint;
+        Paint mTimeTextPaint;
+        Paint mWeatherTextPaint;
         boolean mAmbient;
         Calendar mCalendar;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -105,6 +106,9 @@ public class WatchfaceService extends CanvasWatchFaceService {
         };
         float mXOffset;
         float mYOffset;
+        float mWeatherXOffset;
+        float mWeatherYOffset;
+        Rect mIconDst;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -125,14 +129,17 @@ public class WatchfaceService extends CanvasWatchFaceService {
                     .build());
             Resources resources = WatchfaceService.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mWeatherYOffset = resources.getDimension(R.dimen.digital_weather_y_offset);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
-            mTextPaint = new Paint();
-            mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
-
+            int digitalTextColor = resources.getColor(R.color.digital_text);
+            mTimeTextPaint = createTextPaint(digitalTextColor);
+            mWeatherTextPaint = createTextPaint(digitalTextColor);
             mCalendar = Calendar.getInstance();
+
+            mIconDst = new Rect();
         }
 
         @Override
@@ -195,10 +202,27 @@ public class WatchfaceService extends CanvasWatchFaceService {
             boolean isRound = insets.isRound();
             mXOffset = resources.getDimension(isRound
                     ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
-            float textSize = resources.getDimension(isRound
+            float timeTextSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
-
-            mTextPaint.setTextSize(textSize);
+            mTimeTextPaint.setTextSize(timeTextSize);
+            mWeatherXOffset = resources.getDimension(isRound
+                    ? R.dimen.digital_weather_x_offset_round
+                    : R.dimen.digital_weather_x_offset);
+            float weatherTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_weather_text_size_round
+                    : R.dimen.digital_weather_text_size);
+            mWeatherTextPaint.setTextSize(weatherTextSize);
+            int iconSize = (int) resources.getDimensionPixelSize(isRound
+                    ? R.dimen.digital_weather_icon_size_round
+                    : R.dimen.digital_weather_icon_size);
+            mIconDst = new Rect(0, 0, iconSize, iconSize);
+            int iconXOffset = resources.getDimensionPixelOffset(isRound
+                    ? R.dimen.digital_weather_icon_x_offset_round
+                    : R.dimen.digital_weather_icon_x_offset);
+            int iconYOffset = resources.getDimensionPixelOffset(isRound
+                    ? R.dimen.digital_weather_icon_y_offset_round
+                    : R.dimen.digital_weather_icon_y_offset);
+            mIconDst.offsetTo(iconXOffset, iconYOffset);
         }
 
         @Override
@@ -218,8 +242,10 @@ public class WatchfaceService extends CanvasWatchFaceService {
             super.onAmbientModeChanged(inAmbientMode);
             if (mAmbient != inAmbientMode) {
                 mAmbient = inAmbientMode;
+                boolean doAntiAliasing = !inAmbientMode;
                 if (mLowBitAmbient) {
-                    mTextPaint.setAntiAlias(!inAmbientMode);
+                    mTimeTextPaint.setAntiAlias(doAntiAliasing);
+                    mWeatherTextPaint.setAntiAlias(doAntiAliasing);
                 }
                 invalidate();
             }
@@ -272,28 +298,19 @@ public class WatchfaceService extends CanvasWatchFaceService {
                     mCalendar.get(Calendar.MINUTE))
                     : String.format("%d:%02d:%02d", mCalendar.get(Calendar.HOUR),
                     mCalendar.get(Calendar.MINUTE), mCalendar.get(Calendar.SECOND));
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+            canvas.drawText(text, mXOffset, mYOffset, mTimeTextPaint);
         }
 
         private void drawWeather(Canvas canvas, Rect bounds) {
             if (mData==null) {
-                canvas.drawText("n/a", bounds.centerX(), bounds.centerY(), mTextPaint);
                 return;
             }
-            canvas.drawText(String.format("%s %s", mData.high, mData.low), pctX(0.2f, bounds), pctY(0.67f, bounds), mTextPaint);
+            canvas.drawText(String.format("%s %s", mData.high, mData.low), mWeatherXOffset, mWeatherYOffset, mWeatherTextPaint);
             // Draw the weather icon only in interactive mode.
             // In a full production app we'd provide AMOLED-safe (thin outline) weather icons.
             if (mData.icon!=null && !isInAmbientMode()) {
-                canvas.drawBitmap(mData.icon, pctX(0.42f, bounds), pctY(0.75f, bounds), null);
+                canvas.drawBitmap(mData.icon, null, mIconDst, null);
             }
-        }
-
-        private float pctY(float s, Rect bounds) {
-            return s * bounds.height() + bounds.top;
-        }
-
-        private float pctX(float s, Rect bounds) {
-            return s * bounds.width() + bounds.left;
         }
 
         /**

@@ -9,4 +9,15 @@
     <dimen name="digital_x_offset">15dp</dimen>
     <dimen name="digital_x_offset_round">25dp</dimen>
     <dimen name="digital_y_offset">90dp</dimen>
+    <dimen name="digital_weather_text_size">26dp</dimen>
+    <dimen name="digital_weather_text_size_round">28dp</dimen>
+    <dimen name="digital_weather_x_offset">18dp</dimen>
+    <dimen name="digital_weather_x_offset_round">30dp</dimen>
+    <dimen name="digital_weather_y_offset">120dp</dimen>
+    <dimen name="digital_weather_icon_size_round">28dp</dimen>
+    <dimen name="digital_weather_icon_size">26dp</dimen>
+    <dimen name="digital_weather_icon_x_offset_round">120dp</dimen>
+    <dimen name="digital_weather_icon_x_offset">116dp</dimen>
+    <dimen name="digital_weather_icon_y_offset_round">97dp</dimen>
+    <dimen name="digital_weather_icon_y_offset">98dp</dimen>
 </resources>
